@@ -51,3 +51,33 @@ func Test_emitter_OnAll(t *testing.T) {
 	}
 
 }
+
+func Test_emitter_On(t *testing.T) {
+	tests := []struct {
+		name           string
+		listenersCount int
+	}{
+		{
+			name:           "should attach 10 listeners",
+			listenersCount: 10,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ee := &emitter{
+				listeners: make(map[string][]chan Data),
+			}
+
+			for i := 0; i < tt.listenersCount; i++ {
+				ee.On("event", func(Data) {})
+			}
+
+			got := len(ee.listeners["event"])
+			if got != tt.listenersCount {
+				t.Errorf("emitter.On(): listeners count expected = %v, got = %v", tt.listenersCount, got)
+			}
+
+		})
+	}
+}

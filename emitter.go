@@ -29,3 +29,18 @@ func (e *emitter) OnAll(l Listener) {
 
 	go listener(ch, l)
 }
+
+// On attaches a listener to a particular event
+func (e *emitter) On(event string, l Listener) {
+	e.Lock()
+	defer e.Unlock()
+
+	if e.closed {
+		return
+	}
+
+	ch := make(chan Data, e.capacity)
+	e.listeners[event] = append(e.listeners[event], ch)
+
+	go listener(ch, l)
+}
