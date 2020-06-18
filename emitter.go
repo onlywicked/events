@@ -20,6 +20,22 @@ func listener(ch <-chan Data, callback Listener) {
 	}
 }
 
+// NewEventEmitter returns an in-memory implementation event emitter
+func NewEventEmitter(capacity ...uint) EventEmitter {
+	var c uint = 1
+	if len(capacity) > 0 {
+		c = capacity[0]
+	}
+
+	e := new(emitter)
+	e.capacity = c
+	e.globalListeners = []chan Data{}
+	e.listeners = make(map[string][]chan Data)
+	e.closed = false
+
+	return e
+}
+
 func (e *emitter) OnAll(l Listener) {
 	e.Lock()
 	defer e.Unlock()
