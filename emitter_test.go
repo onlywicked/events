@@ -1,6 +1,7 @@
 package events
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -76,6 +77,51 @@ func Test_emitter_On(t *testing.T) {
 			got := len(ee.listeners["event"])
 			if got != tt.listenersCount {
 				t.Errorf("emitter.On(): listeners count expected = %v, got = %v", tt.listenersCount, got)
+			}
+
+		})
+	}
+}
+
+func Test_emitter_Emit(t *testing.T) {
+	tests := []struct {
+		emitCount int
+	}{
+		{
+			emitCount: 3,
+		},
+		{
+			emitCount: 10,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("should emit %d events", tt.emitCount), func(t *testing.T) {
+			ee := &emitter{
+				listeners: make(map[string][]chan Data),
+			}
+
+			var wg sync.WaitGroup
+			var lock sync.RWMutex
+			count := 0
+
+			wg.Add(tt.emitCount)
+			ee.On("event", func(Data) {
+				lock.Lock()
+				defer lock.Unlock()
+				count++
+				wg.Done()
+			})
+
+			for i := 0; i < tt.emitCount; i++ {
+				ee.Emit("event", Data{})
+			}
+
+			if waitTimeout(&wg, 2*time.Second) {
+				t.Fatalf("emitter.Emit(): attached listener ran too long")
+			}
+
+			if count != tt.emitCount {
+				t.Errorf("emitter.Emit(): to emitted event count expected = %v, got = %v", tt.emitCount, count)
 			}
 
 		})

@@ -44,3 +44,37 @@ func (e *emitter) On(event string, l Listener) {
 
 	go listener(ch, l)
 }
+
+func (e *emitter) Emit(event string, data Data) {
+	e.Lock()
+	defer e.Unlock()
+
+	if e.closed {
+		return
+	}
+
+	// setting data event to emitted event for easier logging and debugging
+	data.event = event
+
+	var wg sync.WaitGroup
+
+	// global listeners
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		for _, ch := range e.globalListeners {
+			ch <- data
+		}
+	}()
+	// event listeners
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		for _, ch := range e.listeners[event] {
+			ch <- data
+		}
+	}()
+	wg.Wait()
+}
