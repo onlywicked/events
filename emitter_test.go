@@ -166,3 +166,64 @@ func Test_emitter_List(t *testing.T) {
 		})
 	}
 }
+
+func Test_emitter_Close(t *testing.T) {
+	tests := []struct {
+		name           string
+		globalCount    int
+		listenersCount int
+	}{
+		{
+			name:           "should clean up allocated resources",
+			listenersCount: 10,
+			globalCount:    3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ee := &emitter{
+				listeners:       make(map[string][]chan Data),
+				globalListeners: []chan Data{},
+			}
+
+			for i := 0; i < tt.globalCount; i++ {
+				ee.OnAll(func(Data) {})
+			}
+
+			for i := 0; i < tt.listenersCount; i++ {
+				ee.On("event", func(Data) {})
+			}
+
+			ee.Close()
+
+			if ee.closed != true {
+				t.Errorf("emitter.Close(): unable to clean up resources")
+			}
+
+			if len(ee.globalListeners) != 0 {
+				t.Errorf("emitter.Close(): unable to clean up global listeners")
+			}
+
+			if len(ee.listeners["event"]) != 0 {
+				t.Errorf("emitter.Close(): unable to clean up event listeners")
+			}
+
+			for i := 0; i < tt.globalCount; i++ {
+				ee.OnAll(func(Data) {})
+			}
+
+			for i := 0; i < tt.listenersCount; i++ {
+				ee.On("event", func(Data) {})
+			}
+
+			if len(ee.globalListeners) != 0 {
+				t.Errorf("emitter.Close(): attached global listeners after closing the emitter")
+			}
+
+			if len(ee.listeners["event"]) != 0 {
+				t.Errorf("emitter.Close(): attached event listeners after closing the emitter")
+			}
+		})
+	}
+}

@@ -24,6 +24,10 @@ func (e *emitter) OnAll(l Listener) {
 	e.Lock()
 	defer e.Unlock()
 
+	if e.closed {
+		return
+	}
+
 	ch := make(chan Data)
 	e.globalListeners = append(e.globalListeners, ch)
 
@@ -88,4 +92,27 @@ func (e *emitter) List() []string {
 	}
 
 	return events
+}
+
+// Close stops the event emitter from emitting events and
+// clean up all the resources.
+// Note: Once Close has been called it cannot be restarted again.
+func (e *emitter) Close() {
+	e.once.Do(func() {
+		e.Lock()
+		defer e.Unlock()
+
+		for _, ch := range e.globalListeners {
+			close(ch)
+		}
+
+		for _, ls := range e.listeners {
+			for _, ch := range ls {
+				close(ch)
+			}
+		}
+		e.globalListeners = nil
+		e.listeners = nil
+		e.closed = true
+	})
 }
