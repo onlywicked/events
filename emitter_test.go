@@ -102,13 +102,22 @@ func Test_emitter_Emit(t *testing.T) {
 
 			var wg sync.WaitGroup
 			var lock sync.RWMutex
-			count := 0
 
+			listened := 0
 			wg.Add(tt.emitCount)
 			ee.On("event", func(Data) {
 				lock.Lock()
 				defer lock.Unlock()
-				count++
+				listened++
+				wg.Done()
+			})
+
+			globalListened := 0
+			wg.Add(tt.emitCount)
+			ee.OnAll(func(Data) {
+				lock.Lock()
+				defer lock.Unlock()
+				globalListened++
 				wg.Done()
 			})
 
@@ -120,8 +129,11 @@ func Test_emitter_Emit(t *testing.T) {
 				t.Fatalf("emitter.Emit(): attached listener ran too long")
 			}
 
-			if count != tt.emitCount {
-				t.Errorf("emitter.Emit(): to emitted event count expected = %v, got = %v", tt.emitCount, count)
+			if listened != tt.emitCount {
+				t.Errorf("emitter.Emit(): to emitted event count expected = %v, listened = %v", tt.emitCount, listened)
+			}
+			if globalListened != tt.emitCount {
+				t.Errorf("emitter.Emit(): to emitted event count expected = %v, global listened = %v", tt.emitCount, globalListened)
 			}
 
 		})
