@@ -40,6 +40,21 @@ func TestData_MarshalJSON(t *testing.T) {
 				"error": "error",
 			},
 		},
+		{
+			name: "should return all fields",
+			fields: fields{
+				event:   "event:happened",
+				Payload: "some payload",
+				Message: "some message",
+				Error:   errors.New("error"),
+			},
+			want: map[string]interface{}{
+				"event":   "event:happened",
+				"payload": "some payload",
+				"message": "some message",
+				"error":   "error",
+			},
+		},
 	}
 
 	for _, tt := range tests {
