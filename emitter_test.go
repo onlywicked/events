@@ -127,3 +127,42 @@ func Test_emitter_Emit(t *testing.T) {
 		})
 	}
 }
+
+func Test_emitter_List(t *testing.T) {
+	tests := []struct {
+		name  string
+		in    []string
+		count int
+	}{
+		{
+			name:  "should return all events",
+			in:    []string{"event1", "event2", "event3"},
+			count: 3,
+		},
+		{
+			name:  "should return only distinct events",
+			in:    []string{"event1", "event2", "event1", "event2"},
+			count: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			ee := &emitter{
+				listeners: make(map[string][]chan Data),
+				capacity:  1,
+			}
+
+			for _, event := range tt.in {
+				ee.On(event, func(data Data) {})
+			}
+
+			gotCount := len(ee.List())
+
+			if gotCount != tt.count {
+				t.Errorf("emitter.List(): total event count expected = %v, got = %v", tt.count, gotCount)
+			}
+		})
+	}
+}

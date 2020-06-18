@@ -78,3 +78,14 @@ func (e *emitter) Emit(event string, data Data) {
 	}()
 	wg.Wait()
 }
+
+// List returns all the events listeners are listening to
+func (e *emitter) List() []string {
+	var events []string
+
+	for event := range e.listeners {
+		events = append(events, event)
+	}
+
+	return events
+}
