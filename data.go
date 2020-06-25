@@ -25,14 +25,16 @@ func (e Data) MarshalJSON() ([]byte, error) {
 
 	if e.Payload != nil {
 		eM["payload"] = e.Payload
+	} else {
+		eM["payload"] = ""
 	}
 
-	if e.Message != "" {
-		eM["message"] = e.Message
-	}
+	eM["message"] = e.Message
 
 	if e.Error != nil {
 		eM["error"] = e.Error.Error()
+	} else {
+		eM["error"] = ""
 	}
 
 	return json.Marshal(eM)
